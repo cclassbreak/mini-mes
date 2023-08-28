@@ -1,0 +1,73 @@
+﻿@inject MyDbContext db
+<MudDialog>
+    <DialogContent>
+        <MudText>新建产品信息</MudText>
+        <MudTextField @bind-Value="ProductNumber" Label="产品编号" Variant="Variant.Text"></MudTextField>
+        <MudTextField @bind-Value="ProductName" Label="产品名称" Variant="Variant.Text"></MudTextField>
+        <MudSelect T="string" Label="原材料号" AnchorOrigin="Origin.BottomCenter" @bind-Value="PartNumber">
+            @foreach (var part in Parts)
+            {
+                <MudSelectItem T="string" Value="@part.PartNumber">@part.PartNumber</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="string" Label="工艺流程号" AnchorOrigin="Origin.BottomCenter" @bind-Value="ProcessFlowNumber">
+            @foreach (var processFlow in ProcessFlows)
+            {
+                <MudSelectItem Value="@processFlow.ProcessFlowNumber">@processFlow.ProcessFlowNumber</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">创建</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string ProductNumber { get; set; }
+    public string ProductName { get; set; }
+    public string PartNumber { get; set; }
+    public string ProcessFlowNumber { get; set; }
+    public List<Part> Parts { get; set; }
+    public List<ProcessFlow> ProcessFlows { get; set; }
+
+    public int PartID
+    {
+        get
+        {
+            var partID = db.Parts.Where(p => p.PartNumber == PartNumber).FirstOrDefault().PartID;
+            return partID;
+        }
+    }
+    
+    public int ProcessFlowID
+    {
+        get
+        {
+            var processFlowID = db.ProcessFlows.Where(p => p.ProcessFlowNumber == ProcessFlowNumber).FirstOrDefault().ProcessFlowID;
+            return processFlowID;
+        }
+    }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        Parts = db.Parts.ToList();
+        ProcessFlows = db.ProcessFlows.ToList();
+        return base.OnParametersSetAsync();
+    }
+
+
+    
+    void Submit()
+    {
+
+        
+
+        Product product = new Product() { ProductName = ProductName, ProductNumber = ProductNumber, PartID = PartID, ProcessFlowID = ProcessFlowID };
+        db.Products.Add(product);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

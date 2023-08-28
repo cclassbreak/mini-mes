@@ -1,0 +1,26 @@
+﻿@inject MyDbContext db
+<MudDialog>
+    <DialogContent>
+        <MudText>新建工站</MudText>
+        <MudTextField @bind-Value="StationName" Label="工站名称" Variant="Variant.Text"></MudTextField>
+        <MudTextField @bind-Value="StationParameter" Label="工站参数" Variant="Variant.Text"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">新建</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string StationName { get; set; }
+    public string StationParameter { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    void Submit()
+    {
+        Station station = new Station() { StationName = StationName, StationParameter = StationParameter };
+        db.Stations.Add(station);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

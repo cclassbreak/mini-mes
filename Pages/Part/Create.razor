@@ -1,0 +1,54 @@
+﻿@inject MyDbContext db
+<MudDialog>
+    <DialogContent>
+        <MudText>新建原材料信息</MudText>
+        <MudTextField @bind-Value="PartNumber" Label="原材料编号" Variant="Variant.Text"></MudTextField>
+        <MudTextField @bind-Value="PartName" Label="原材料名称" Variant="Variant.Text"></MudTextField>
+        <MudSelect T="string" Label="客户编号" AnchorOrigin="Origin.BottomCenter" @bind-Value="CustomerNumber">
+            @foreach (var customer in Customers)
+            {
+                <MudSelectItem T="string" Value="@customer.CustomerNumber">@customer.CustomerNumber</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">新建</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string PartName { get; set; }
+    public string PartNumber { get; set; }
+    public string CustomerNumber { get; set; }
+    public List<Customer> Customers { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    public int CustomerID
+    {
+        get
+        {
+            var customerID = db.Customers.Where(p => p.CustomerNumber == CustomerNumber).FirstOrDefault().CustomerID;
+            return customerID;
+        }
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        Customers = db.Customers.ToList();
+        return base.OnParametersSetAsync();
+    }
+
+    void Submit()
+    {
+        Part part = new Part()
+            {
+                PartName = PartName,
+                PartNumber = PartNumber,
+                CustomerID = CustomerID
+            };
+        db.Parts.Add(part);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

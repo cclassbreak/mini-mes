@@ -1,0 +1,84 @@
+﻿@page "/customer"
+@inject DataService dataService
+@inject IDialogService DialogService
+
+
+
+
+<MudDataGrid Items="@customers" ReadOnly="false"
+             EditDialogOptions="maxWidth"
+             EditMode="DataGridEditMode.Form"
+             EditTrigger="DataGridEditTrigger.Manual"
+             QuickFilter="@_quickFilter">
+    <ToolBarContent>
+        <MudText Typo="Typo.h5">客户信息</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        <MudSpacer />
+        <MudPaper Class="pa-2 ma-2" Elevation="0">
+            <MudIconButton OnClick="@((e) => OpenDialog(maxWidth))" Icon="@Icons.Material.Filled.PlaylistAdd"></MudIconButton>
+        </MudPaper>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x=>x.CustomerNumber" Title="客户编号" />
+        <PropertyColumn Property="x=>x.CustomerName" Title="客户名称" />
+        <PropertyColumn Property="x=>x.DeliveryAddress" Title="送货地址" />
+        <PropertyColumn Property="x=>x.ContactPerson" Title="联系人" />
+        <PropertyColumn Property="x=>x.ContactPhone" Title="联系电话" />
+        <TemplateColumn Hidden="false" CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+            </CellTemplate>
+        </TemplateColumn>
+
+
+    </Columns>
+</MudDataGrid>
+
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth=true};
+    private List<Customer> customers;
+    private string _searchString;
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await dataService.GetCustomersAsync();
+    }
+
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("新建客户信息", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            OnInitializedAsync();
+        }
+    }
+
+    private Func<Customer, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.CustomerNumber.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.CustomerName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.DeliveryAddress.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.ContactPerson.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.ContactPhone.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+}
+
+

@@ -1,0 +1,103 @@
+﻿@page "/process_flow/{processFlowId:int}/edit"
+
+@inject MyDbContext db
+@inject DataService dataService
+
+<MudTextField Disabled=true Value="@processFlow.ProcessFlowNumber" Label="工艺路线号"></MudTextField>
+<MudTextField Disabled=true Value="@processFlow.ProcessFlowName" Label="工艺路线名称"></MudTextField>
+<MudNumericField @bind-Value="@selectedStepNumber" Label="工序序号" Variant="Variant.Text" Min="0" Max="10" />
+<MudTextField @bind-Value="@processStepName" Label="工序名称"></MudTextField>
+<MudSelect T="string" Label="工站" AnchorOrigin="Origin.BottomCenter" Value="selectedStationName" ValueChanged="@(newStationName => HandleStationChanged(newStationName))">
+    @foreach (var stationName in uniqueStationNames)
+    {
+        <MudSelectItem T="string" Value="@stationName">@stationName</MudSelectItem>
+    }
+</MudSelect>
+<MudSelect T="string" Label="工站参数" AnchorOrigin="Origin.BottomCenter" @bind-Value="selectedStatationParameter" Disabled=!_hasSelectedStation>
+    @foreach (var station in Stations)
+    {
+        <MudSelectItem Value="@station.StationParameter">@station.StationParameter</MudSelectItem>
+    }
+</MudSelect>
+<MudButton OnClick="@AddProcessStep" Variant="@Variant.Filled" Color="@Color.Primary">添加工艺</MudButton>
+
+
+
+<MudTable  Items="@processSteps">
+    <HeaderContent>
+        <MudTh>工序序号</MudTh>
+        <MudTh>工序名称</MudTh>
+        <MudTh>工站名称</MudTh>
+        <MudTh>工站参数</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nr">@context.StepNumber</MudTd>
+        <MudTd DataLabel="Name">@context.ProcessStepName</MudTd>
+        <MudTd DataLabel="Age">@context.Station.StationName</MudTd>
+        <MudTd DataLabel="Age">@context.Station.StationParameter</MudTd>
+        <MudTd>
+            <MudButton Size="@Size.Small" Variant="@Variant.Outlined" Color="@Color.Error" OnClick="@(() => DeleteItem(context))">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+
+
+</MudTable>
+
+@code {
+    [Parameter]
+    public int ProcessFlowId { get; set; }
+
+    public List<string> uniqueStationNames;
+    public ProcessFlow processFlow;
+    public List<Station> Stations;
+    public List<ProcessStep> processSteps;
+
+    public int selectedStepNumber { get; set; }
+    public string selectedStationName { get; set; }
+    public string selectedStatationParameter { get; set; }
+    public string processStepName { get; set; }
+    public bool _hasSelectedStation { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        processSteps = await db.ProcessSteps
+            .Include(ps => ps.Station)
+            .Where(ps => ps.ProcessFlowID == ProcessFlowId)
+            .OrderBy(ps => ps.StepNumber)
+            .ToListAsync();
+        processFlow = await dataService.GetProcessFlow(ProcessFlowId);
+        Stations = await db.Stations.ToListAsync();
+        uniqueStationNames = await db.Stations.Select(s => s.StationName).Distinct().ToListAsync();
+
+    }
+
+    async Task HandleStationChanged(string newStationName)
+    {
+        selectedStationName = newStationName;
+        Stations = await db.Stations.Where(s => s.StationName == selectedStationName).ToListAsync();
+        _hasSelectedStation = true;
+    }
+
+    async Task AddProcessStep()
+    {
+        var station = await db.Stations.Where(s => s.StationName == selectedStationName && s.StationParameter == selectedStatationParameter).FirstOrDefaultAsync();
+        var processStep = new ProcessStep()
+            {
+                ProcessStepName = processStepName,
+                ProcessFlowID = ProcessFlowId,
+                StepNumber = selectedStepNumber,
+                StationID = station.StationID
+            };
+        await db.ProcessSteps.AddAsync(processStep);
+        await db.SaveChangesAsync();
+        await OnInitializedAsync();
+    }
+
+    async Task DeleteItem(ProcessStep processStep)
+    {
+        db.ProcessSteps.Remove(processStep);
+        await db.SaveChangesAsync();
+        await OnInitializedAsync();
+    }
+}

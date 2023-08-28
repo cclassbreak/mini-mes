@@ -1,0 +1,111 @@
+﻿@page "/work_order/todo"
+@inject MyDbContext db
+@inject IDialogService DialogService
+@inject ISnackbar sb
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">工单信息</MudText>
+</MudPaper>
+@*<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">创建工单</MudButton>
+</MudPaper>*@
+
+<MudDataGrid Items="@groupedOrderItems">
+    <Columns>
+        <PropertyColumn Property="x => x.CustomerOrderNumber" />
+        <PropertyColumn Property="x => x.Priority" />
+        <PropertyColumn Property="x => x.EstimateShipDate" Format="d" />
+        <PropertyColumn Property="x => x.PartNumber" />
+        <PropertyColumn Property="x => x.RequiredQuantity" />
+        <PropertyColumn Property="x => x.PlacedQuantity" />
+        <PropertyColumn Property="x => x.ProcessFlow" />
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                    <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="@(()=>OpenDialog(maxWidth, context.Item.OrderItemID))">新建相关工单</MudButton>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="GroupedOrderItem" PageSizeOptions=@(new int[] {5, 10, 20}) />
+    </PagerContent>
+
+</MudDataGrid>
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private List<GroupedOrderItem> groupedOrderItems;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        groupedOrderItems = await db.OrderItems
+                            .Include(oi => oi.Product)
+                            .Include(oi => oi.CustomerOrder)
+                            .Include(oi => oi.WorkOrders)
+                            .GroupBy(oi => new { oi.CustomerOrderID, oi.ProductID })
+                            .Select(g => new GroupedOrderItem
+                                {
+                                    CustomerOrderID = g.Key.CustomerOrderID,
+                                    CustomerOrderNumber = g.Min(oi => oi.CustomerOrder.CustomerOrderNumber),
+                                    OrderItemID = g.Min(oi => oi.OrderItemID),
+                                    ProductID = g.Key.ProductID,
+                                    Priority = g.Max(oi => oi.CustomerOrder.Priority),
+                                    EstimateShipDate = g.Min(oi => oi.CustomerOrder.EstimateShipDate),
+                                    PartNumber = g.Max(oi => oi.Product.Part.PartName),
+                                    RequiredQuantity = g.Sum(oi => oi.RequiredQuantity),
+                                    PlacedQuantity = g.Sum(oi => oi.WorkOrders.Sum(wo => wo.LotQuantity)),
+                                    ProcessFlow = g.Max(oi => oi.Product.ProcessFlow.ProcessFlowName),
+                                })
+                            .Where(g => g.PlacedQuantity < g.RequiredQuantity)
+                            .Select(g => new GroupedOrderItem
+                                {
+                                    CustomerOrderID = g.CustomerOrderID,
+                                    CustomerOrderNumber = g.CustomerOrderNumber,
+                                    OrderItemID = g.OrderItemID,
+                                    ProductID = g.ProductID,
+                                    Priority = g.Priority,
+                                    EstimateShipDate = g.EstimateShipDate,
+                                    PartNumber = g.PartNumber,
+                                    RequiredQuantity = g.RequiredQuantity,
+                                    PlacedQuantity = g.PlacedQuantity,
+                                    ProcessFlow = g.ProcessFlow,
+                                })
+                            .ToListAsync();
+
+    }
+
+
+    async Task CreateWorkOrder(int productID)
+    {
+        sb.Add($"hello {productID}");
+    }
+
+    protected async Task OpenDialog(DialogOptions options, int orderItemID)
+    {
+        var parameters = new DialogParameters<Create> { { x => x.OrderItemID, orderItemID } };
+        var dialog = await DialogService.ShowAsync<Create>("Create New Station", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            OnInitializedAsync();
+        }
+    }
+
+    public class GroupedOrderItem
+    {
+        public int CustomerOrderID { get; set; }
+        public string CustomerOrderNumber { get; set; }
+        public int ProductID { get; set; }
+        public int OrderItemID { get; set; }
+        public int Priority { get; set; }
+        public DateTime EstimateShipDate { get; set; }
+        public string PartNumber { get; set; }
+        public int RequiredQuantity { get; set; }
+        public int PlacedQuantity { get; set; }
+        public string ProcessFlow { get; set; }
+    }
+}
+
+

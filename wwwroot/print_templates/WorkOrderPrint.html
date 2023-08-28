@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Work Order</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .work-order-details {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+            .work-order-details td {
+                padding: 10px;
+                border: 1px solid #ddd;
+            }
+
+        #qrcode {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div id="qrcode"></div>
+    <div class="header">
+        <h1>Work Order</h1>
+    </div>
+
+    <table class="work-order-details">
+        <tr>
+            <td><strong>Work Order Number:</strong></td>
+            <td>{WorkOrderNumber}</td>
+        </tr>
+        <tr>
+            <td><strong>Created Date:</strong></td>
+            <td>{CreatedDate}</td>
+        </tr>
+        <tr>
+            <td><strong>Product Number:</strong></td>
+            <td>{ProductNumber}</td>
+        </tr>
+        <tr>
+            <td><strong>Quantity:</strong></td>
+            <td>{Quantity}</td>
+        </tr>
+    </table>
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "{WorkOrderNumber}",
+            width: 75, // Approximately 2cm
+            height: 75, // Approximately 2cm
+        });
+    </script>
+</body>
+</html>

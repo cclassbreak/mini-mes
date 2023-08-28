@@ -1,0 +1,42 @@
+﻿@inject MyDbContext db
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment Environment
+<MudDialog>
+    <DialogContent>
+        <MudText>新建工单</MudText>
+        <MudTextField @bind-Value="WorkOrderNumber" Label="Work Order Number" Variant="Variant.Text"></MudTextField>
+        <MudNumericField @bind-Value="LotQuantity" Label="Lot Quantity" Min="1" Max="9999"></MudNumericField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Print">确认</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string WorkOrderNumber { get; set; }
+    public int LotQuantity { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public int OrderItemID { get; set; }
+
+    void Submit()
+    {
+        WorkOrder workOrder = new WorkOrder() { WorkOrderNumber = WorkOrderNumber, LotQuantity = LotQuantity, OrderItemID = OrderItemID, Created=DateTime.Now };
+        db.WorkOrders.Add(workOrder);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+
+    private async Task Print()
+    {
+        var filePath = Path.Combine(Environment.WebRootPath, "print_templates/WorkOrderPrint.html");
+        var template = await File.ReadAllTextAsync(filePath);
+        var printContent = template.Replace("{WorkOrderNumber}", WorkOrderNumber)
+                                   .Replace("{LotQuantity}", LotQuantity.ToString())
+                                    .Replace("{CreatedDate}", DateTime.Now.ToString())
+                                    .Replace("{ProductNumber}", "还没有写TODO")
+                                   .Replace("{Quantity}", LotQuantity.ToString());
+        // Replace additional placeholders as required
+        await JSRuntime.InvokeVoidAsync("printFunctions.print", printContent);
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/part"
+@inject MyDbContext db
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">原料信息</MudText>
+</MudPaper>
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">新建</MudButton>
+</MudPaper>
+
+<MudDataGrid Items="@parts">
+    <Columns>
+        <PropertyColumn Property="x => x.PartNumber" Title="原料编号"/>
+        <PropertyColumn Property="x => x.PartName" Title="原料名称"/>
+        <PropertyColumn Property="x => x.Customer.CustomerName" Title="客户名称" />
+    </Columns>
+</MudDataGrid>
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private List<Part> parts;
+    protected override async Task OnInitializedAsync()
+    {
+        parts = await db.Parts
+                        .Include(p=>p.Customer)
+                        .ToListAsync();
+    }
+
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("Create New Parts", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await OnInitializedAsync();
+        }
+    }
+}
+
+

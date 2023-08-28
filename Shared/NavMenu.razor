@@ -1,0 +1,25 @@
+﻿<MudPaper Width="250px" Class="py-3" Elevation="0">
+    <MudNavMenu>
+        <MudText Typo="Typo.h6" Class="px-4">Mini MES</MudText>
+        <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Woohoo</MudText>
+        <MudDivider Class="my-2" />
+        <MudNavGroup Title="基础数据" Expanded="false" Disabled="false">
+            <MudNavLink Href="/customer">客户</MudNavLink>
+            <MudNavLink Href="/part">原材料</MudNavLink>
+            <MudNavLink Href="/station">工站</MudNavLink>
+            <MudNavLink Href="/process_flow">工艺路线</MudNavLink>
+            <MudNavLink Href="/product">产品</MudNavLink>
+        </MudNavGroup>
+        <MudNavLink Href="/customer_order">订单</MudNavLink>
+        <MudNavGroup Title="工单" Expanded="true">
+            <MudNavLink Href="/work_order">工单</MudNavLink>
+            <MudNavLink Href="/work_order/todo">代办订单一栏</MudNavLink>
+
+        </MudNavGroup>
+        <MudNavGroup Title="Settings" Expanded="true">
+            <MudNavLink Href="/users">Users</MudNavLink>
+            <MudNavLink Href="/security">Security</MudNavLink>
+        </MudNavGroup>
+        <MudNavLink Href="/about">About</MudNavLink>
+    </MudNavMenu>
+</MudPaper>

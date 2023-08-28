@@ -1,0 +1,39 @@
+﻿@inject MyDbContext db
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="SearchText" Label="Search" Variant="Variant.Text " TextChanged="@SearchForProcessFlow"></MudTextField>
+        <MudTable Items="@ProcessFlows" Hover="true" Breakpoint="Breakpoint.Sm"  T="ProcessFlow">
+            <HeaderContent>
+                <MudTh>工艺路线号</MudTh>
+                <MudTh>工艺路线名称</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Nr">@context.ProcessFlowNumber</MudTd>
+                <MudTd DataLabel="ProcessFlowName">@context.ProcessFlowName</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string SearchText { get; set; }
+
+    public List<ProcessFlow> ProcessFlows { get; set; }
+    
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    async Task SearchForProcessFlow(string searchText)
+    {
+        ProcessFlows = await db.ProcessFlows.Where(p => p.ProcessFlowName.Contains(searchText)).ToListAsync();
+    }
+
+    void Submit()
+    {
+ 
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

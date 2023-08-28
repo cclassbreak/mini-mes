@@ -1,0 +1,42 @@
+﻿@page "/product"
+@inject DataService dataService
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">产品信息</MudText>
+</MudPaper>
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">新建</MudButton>
+</MudPaper>
+
+<MudDataGrid Items="@products">
+    <Columns>
+        <PropertyColumn Property="x => x.ProductNumber" Title="产品编号"/>
+        <PropertyColumn Property="x => x.ProductName" Title="产品名称"/>
+        <PropertyColumn Property="x => x.Part.PartNumber" Title="原料编号" />
+        <PropertyColumn Property="x => x.Part.PartName" Title="原料名称" />
+    </Columns>
+</MudDataGrid>
+
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private List<Product> products;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        products = await dataService.GetProductsWithParts();
+    }
+
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("Create New Product", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            OnInitializedAsync();
+        }
+    }
+}
+
+

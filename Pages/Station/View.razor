@@ -1,0 +1,38 @@
+﻿@page "/station"
+@inject DataService dataService
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">工站信息</MudText>
+</MudPaper>
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">新建</MudButton>
+</MudPaper>
+
+<MudDataGrid Items="@stations">
+    <Columns>
+        <PropertyColumn Property="x => x.StationName" Title="工站名称"/>
+        <PropertyColumn Property="x => x.StationParameter" Title="工站参数"/>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private List<Station> stations;
+    protected override async Task OnInitializedAsync()
+    {
+        stations = await dataService.GetStations();
+    }
+
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("Create New Station", options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            OnInitializedAsync();
+        }
+    }
+}
+
+

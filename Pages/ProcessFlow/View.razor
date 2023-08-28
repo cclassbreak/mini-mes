@@ -1,0 +1,56 @@
+﻿@page "/process_flow"
+@inject MyDbContext db
+@inject NavigationManager nav
+@inject IDialogService DialogService
+
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">工艺路线信息</MudText>
+</MudPaper>
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">新建</MudButton>
+</MudPaper>
+
+<MudDataGrid Items="@processFlows">
+    <Columns>
+        <PropertyColumn Property="x => x.ProcessFlowNumber" Title="工艺路线编号"/>
+        <PropertyColumn Property="x => x.ProcessFlowName" Title="工艺路线名称"/>
+    </Columns>
+</MudDataGrid>
+
+@*<MudButton Size="@Size.Small" Variant="@Variant.Outlined" Color="@Color.Primary" OnClick="@(() => SearchForProcessFlow(context.ProcessFlowNumber))">Edit</MudButton>*@
+
+
+@code {
+    private List<ProcessFlow> processFlows;
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    protected override async Task OnInitializedAsync()
+    {
+        processFlows = await db.ProcessFlows.ToListAsync();
+    }
+
+    async Task SearchForProcessFlow(string processFlowNumber)
+    {
+        var processFlow = await db.ProcessFlows.Where(p => p.ProcessFlowNumber.Contains(processFlowNumber)).FirstOrDefaultAsync();
+        if (processFlow != null)
+        {
+            nav.NavigateTo($"process_flow/{processFlow.ProcessFlowID}/edit");
+        }
+        else
+        {
+            processFlowNumber = "未找到";
+        }
+    }
+    
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("Create New Process Flow", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await OnInitializedAsync();
+        }
+    }
+}
+
+

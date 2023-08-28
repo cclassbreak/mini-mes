@@ -1,0 +1,36 @@
+﻿@inject MyDbContext db
+@inject NavigationManager nav
+
+<MudDialog>
+    <DialogContent>
+        <MudPaper Class="pa-2 ma-2" Elevation="0">
+            <MudText>新建工艺路线</MudText>
+        </MudPaper>
+        <MudTextField @bind-Value=ProcessFlowNumber Label="工艺路线号" Variant="Variant.Text"></MudTextField>
+        <MudTextField @bind-Value=ProcessFlowName Label="工艺路线名称" Variant="Variant.Text"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">新建并编辑</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private string ProcessFlowNumber;
+    private string ProcessFlowName;
+
+
+
+    void Submit()
+    {
+        var processFlow = new ProcessFlow() { ProcessFlowName = ProcessFlowName, ProcessFlowNumber = ProcessFlowNumber };
+        var res = db.ProcessFlows.Add(processFlow);
+        db.SaveChanges();
+        int processFlowId = processFlow.ProcessFlowID;
+        nav.NavigateTo($"process_flow/{processFlowId}/edit");
+    }
+    void Cancel() => MudDialog.Cancel();
+}
+
+

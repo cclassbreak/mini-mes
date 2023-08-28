@@ -1,0 +1,64 @@
+﻿@inject MyDbContext db
+@inject IDialogService DialogService
+@inject NavigationManager nav
+<MudDialog>
+    <DialogContent>
+        <MudText>添加商品</MudText>
+        <MudSelect @bind-Value="productID" Label="Product">
+            @foreach (var product in products)
+            {
+                <MudSelectItem Value="@product.ProductID">[@product.ProductNumber]@product.ProductName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField @bind-Value="quantity" Label="Quantity" Min="1" Max="9999" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">添加</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+    private List<Product> products;
+    private int productID;
+    private int quantity = 1;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public int CustomerOrderID { get; set; }
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        products = await db.Products.ToListAsync();
+    }
+
+    async Task Submit()
+    {
+        var placedOrderItem = await db.OrderItems
+                                        .Where(oi => oi.CustomerOrderID == CustomerOrderID)
+                                        .Where(oi => oi.ProductID == productID).FirstOrDefaultAsync();
+        if (placedOrderItem != null)
+        {
+            placedOrderItem.RequiredQuantity += quantity;
+        }
+        else
+        {
+            OrderItem orderItem = new OrderItem()
+                {
+                    ProductID = productID,
+                    RequiredQuantity = quantity,
+                    CustomerOrderID = CustomerOrderID
+                };
+            await db.OrderItems.AddAsync(orderItem);
+        }
+        
+        await db.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}
+
+

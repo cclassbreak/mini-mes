@@ -1,0 +1,48 @@
+﻿@page "/customer_order"
+@inject MyDbContext db
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">订单信息</MudText>
+</MudPaper>
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudButton OnClick="@((e) => OpenDialog(maxWidth))">新建</MudButton>
+</MudPaper>
+
+<MudDataGrid Items="@customerOrders">
+    <Columns>
+        <PropertyColumn Property="x => x.CustomerOrderNumber" Title="订单编号"></PropertyColumn>
+        <PropertyColumn Property="x => x.OrderProgress" Title="进度"></PropertyColumn>
+        <PropertyColumn Property="x => x.Customer.CustomerName" Title="客户名称"></PropertyColumn>
+        <PropertyColumn Property="x => x.Customer.DeliveryAddress" Title="送货地址"></PropertyColumn>
+        <PropertyColumn Property="x => x.Priority" Title="优先度"></PropertyColumn>
+        <PropertyColumn Property="x => x.Created" Title="创建日期"></PropertyColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    
+    private List<CustomerOrder> customerOrders;
+    protected override async Task OnInitializedAsync()
+    {
+        customerOrders = await db.CustomerOrders
+            .Include(co => co.Customer)
+            .OrderBy(co=>co.CustomerOrderNumber)
+            .Take(10)
+            .ToListAsync();
+    }
+
+
+    protected async Task OpenDialog(DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<Create>("新建订单", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await OnInitializedAsync();
+        }
+    }
+}
+
+

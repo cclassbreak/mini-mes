@@ -1,0 +1,58 @@
+﻿@inject MyDbContext db
+@inject IDialogService DialogService
+@inject NavigationManager nav
+<MudDialog>
+    <DialogContent>
+        <MudText>新建客户订单</MudText>
+        <MudTextField @bind-Value="customerOrderNumber" Label="Customer Order Number" />
+        <MudSelect @bind-Value="customerID" Label="Customer">
+            @foreach (var customer in customers)
+            {
+                <MudSelectItem Value="@customer.CustomerID">@customer.CustomerName - @customer.DeliveryAddress</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="priority" Label="Priority" />
+        <MudNumericField @bind-Value="leadTimeDays" Label="Lead Time Days" Min="1" Max="365" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">新建并添加商品</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+    private string customerOrderNumber;
+    private int priority;
+    private int leadTimeDays;
+    private int customerID;
+    private List<Customer> customers;
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        customers = await db.Customers.ToListAsync();
+    }
+
+    void Submit()
+    {
+        CustomerOrder customerOrder = new CustomerOrder()
+            {
+                CustomerOrderNumber = customerOrderNumber,
+                Priority = priority,
+                Created = DateTime.Now,
+                EstimateShipDate = DateTime.Now.AddDays(leadTimeDays),
+                CustomerID = customerID,
+            };
+        db.CustomerOrders.Add(customerOrder);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+        int customerOrderID = customerOrder.CustomerOrderID;
+        nav.NavigateTo($"./customer_order/{customerOrderID}");
+    }
+    void Cancel() => MudDialog.Cancel();
+}
+
+

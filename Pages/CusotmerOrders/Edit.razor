@@ -1,0 +1,56 @@
+﻿@page "/customer_order/{customerOrderID:int}"
+@inject MyDbContext db
+@inject IDialogService DialogService
+
+<MudTextField Disabled="true" Label="Customer Order Number" @bind-Value="@customerOrder.CustomerOrderNumber" />
+<MudTextField Disabled="true" Label="Customer Name" @bind-Value="@customerOrder.Customer.CustomerName" />
+<MudTextField Disabled="true" Label="Priority" @bind-Value="@customerOrder.Priority" />
+<MudTextField Disabled="true" Label="Created" @bind-Value="@customerOrder.Created" />
+<MudTextField Disabled="true" Label="Estimate Ship Date" @bind-Value="@customerOrder.EstimateShipDate" />
+
+<MudButton OnClick="@((e) => OpenDialog(maxWidth, customerOrderID))">添加商品</MudButton>
+
+<MudDataGrid Items="@orderItems">
+    <Columns>
+        <PropertyColumn Property="x => x.Product.ProductNumber" Title="Product Number"></PropertyColumn>
+        <PropertyColumn Property="x => x.Product.ProductName" Title="Product Name"></PropertyColumn>
+        <PropertyColumn Property="x => x.RequiredQuantity" Title="Requried Quantity"></PropertyColumn>
+    </Columns>
+</MudDataGrid>
+@code{
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    [Parameter]
+    public int customerOrderID { get; set; }
+
+    private CustomerOrder customerOrder;
+
+    private List<OrderItem> orderItems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        customerOrder = await db.CustomerOrders
+            .Include(co => co.Customer)
+            .Where(co => co.CustomerOrderID == customerOrderID)
+            .FirstOrDefaultAsync();
+
+        orderItems = await db.OrderItems
+            .Include(oi => oi.Product)
+            .Where(oi => oi.CustomerOrderID == customerOrderID)
+            .ToListAsync();
+    }
+
+    protected async Task OpenDialog(DialogOptions options, int customerOrderID)
+    {
+        var parameters = new DialogParameters<CreateOrderItem> { { x => x.CustomerOrderID, customerOrderID } };
+        var dialog = await DialogService.ShowAsync<CreateOrderItem>("添加商品", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            OnInitializedAsync();
+        }
+    }
+}
+
+
+

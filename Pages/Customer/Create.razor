@@ -1,0 +1,31 @@
+﻿@inject MyDbContext db
+<MudDialog>
+    <DialogContent>
+        <MudTextField Required="true" @bind-Value="CustomerName" Label="客户名称" Variant="Variant.Text"></MudTextField>
+        <MudTextField Required="true" @bind-Value="CustomerNumber" Label="客户编号" Variant="Variant.Text"></MudTextField>
+        <MudTextField Required="true" @bind-Value="DeliveryAddress" Label="送货地址" Variant="Variant.Text"></MudTextField>
+        <MudTextField Required="true" @bind-Value="ContactPerson" Label="联系人" Variant="Variant.Text"></MudTextField>
+        <MudTextField Required="true" @bind-Value="ContactPhone" Label="联系电话" Variant="Variant.Text"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    public string CustomerName { get; set; }
+    public string CustomerNumber { get; set; }
+    public string DeliveryAddress { get; set; }
+    public string ContactPerson { get; set; }
+    public string ContactPhone { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    void Submit()
+    {
+        Customer customer = new Customer() { CustomerName = CustomerName, CustomerNumber = CustomerNumber, DeliveryAddress = DeliveryAddress, ContactPerson = ContactPerson, ContactPhone = ContactPhone };
+        db.Customers.Add(customer);
+        db.SaveChanges();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

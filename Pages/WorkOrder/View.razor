@@ -1,0 +1,31 @@
+﻿@page "/work_order"
+@inject MyDbContext db
+
+<MudPaper Class="pa-2 ma-2" Elevation="0">
+    <MudText Typo="Typo.h3">工单信息</MudText>
+</MudPaper>
+
+
+<MudDataGrid Items="@workOrders">
+    <Columns>
+        <PropertyColumn Property="x => x.WorkOrderNumber" Title="工单编号"/>
+        <PropertyColumn Property="x => x.OrderItem.Product.ProductName" Title="产品名称" />
+        <PropertyColumn Property="x => x.LotQuantity" Title="数量"/>
+        <PropertyColumn Property="x => x.Created" Title="创建日期" />
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private List<WorkOrder> workOrders;
+    protected override async Task OnInitializedAsync()
+    {
+        workOrders = await db.WorkOrders
+        .Include(co => co.OrderItem)
+        .Include(co => co.OrderItem.Product)
+        .ToListAsync();
+    }
+
+
+}
+
+
